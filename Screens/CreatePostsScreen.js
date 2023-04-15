@@ -1,39 +1,48 @@
 import React, {useState} from "react";
 import { StyleSheet, View, Text, Dimensions, Image, TextInput, TouchableOpacity, Button } from "react-native";
-import { Camera, CameraType } from 'expo-camera';
+import { Camera} from 'expo-camera';
 import Header from "../components/CreatePost/header";
 import * as Location from 'expo-location';
 
 
-export default function UserList() {
+export default function AddPost({navigation}) {
 
-    // const [location, setLocation] = useState(null);
+    const [location, setLocation] = useState(null);
     const [camera, setCamera] = useState(null);
     const [photo, setPhoto] = useState('');
     const [isCameraReady, setIsCameraReady] = useState(false);
-    const [type, setType] = useState(CameraType.back);
+    // const [type, setType] = useState(CameraType.back);
     const [permission, requestPermission] = Camera.useCameraPermissions();
 
     const onCameraReady = () => {
         setIsCameraReady(true);
     };
 
-     function toggleCameraType() {
-    setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
-  }
+//      function toggleCameraType() {
+//     setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
+//   }
 
     const takePhoto = async () => {
         if (isCameraReady) {
-            const photo = await camera.takePictureAsync();
-            const location = await Location.getCurrentPositionAsync();
+        const photo = await camera.takePictureAsync();
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+            setLocation(location);
             setPhoto(photo.uri);
-            console.log(photo.uri)
-            // setLocation(location);
-            console.log(location)
+            console.log('photo', photo.uri)
+            console.log('location', location)
         }
     };
 
-    
+    const sendPosts = () => {
+        console.log(navigation)
+        navigation.navigate('post', {photo, location});
+        }
+
         const width = Dimensions.get('window').width;
         const height = Dimensions.get('window').height;
 
@@ -60,9 +69,9 @@ export default function UserList() {
                 ref={setCamera}
                     onCameraReady={onCameraReady}
                 >
-                      <TouchableOpacity style={styles.button} onPress={toggleCameraType}>
+                      {/* <TouchableOpacity style={styles.button} onPress={toggleCameraType}>
                         <Text style={styles.text}>Flip Camera</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
                    {photo &&  <View style={{ position: 'absolute'}}>
                         <Image source={{uri : photo}} style={{width: (width - 32), height: (height - 572)}} />
                     </View>}
@@ -90,7 +99,7 @@ export default function UserList() {
                 >
                 </TextInput>
             </View>
-            <TouchableOpacity style={styles.btn} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.btn} activeOpacity={0.7} onPress={sendPosts}>
                 <Text style={{...styles.btnText, color: '#BDBDBD'}}>Опублікувати</Text>
                     </TouchableOpacity>
         </View>
